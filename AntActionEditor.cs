@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Web.UI.WebControls;
+using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Web.Controls;
 using Inedo.BuildMaster.Web.Controls.Extensions;
@@ -40,7 +41,7 @@ namespace Inedo.BuildMasterExtensions.Java
             EnsureChildControls();
 
             var action = (AntAction)extension;
-            this.txtProjectFilePath.Text = action.BuildPath ?? string.Empty;
+            this.txtProjectFilePath.Text = Util.NullIf(action.BuildPath, "build.xml") ?? "";
             this.txtBuildTarget.Text = action.ProjectBuildTarget ?? string.Empty;
             this.txtAdditionalProperties.Text = string.Join(Environment.NewLine, action.BuildProperties ?? new string[0]);
         }
@@ -65,7 +66,7 @@ namespace Inedo.BuildMasterExtensions.Java
             this.txtProjectFilePath = new ValidatingTextBox
             {
                 Width = 300,
-                Required = true
+                DefaultText = "build.xml"
             };
 
             this.txtBuildTarget = new ValidatingTextBox
@@ -88,7 +89,7 @@ namespace Inedo.BuildMasterExtensions.Java
                     new StandardFormField("Build File Path:", this.txtProjectFilePath)
                 ),
                 new FormFieldGroup("Build Target",
-                    "The Build Target property. For example: build",
+                    "The Build Target property, for example: compile dist. Multiple targets should be separated by spaces. Single targets with spaces in their name must be quoted. If no target is specified here, the project file's default task will be run. If no default is specified in the project file, Ant v1.6.0 and later will run all top-level tasks.",
                     false,
                     new StandardFormField("Build Target:", this.txtBuildTarget)
                 ),

@@ -18,6 +18,8 @@ namespace Inedo.BuildMasterExtensions.Java
     [RequiresInterface(typeof(IRemoteProcessExecuter))]
     public sealed class AntAction : CommandLineActionBase
     {
+        private string buildPath;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AntAction"/> class.
         /// </summary>
@@ -34,7 +36,11 @@ namespace Inedo.BuildMasterExtensions.Java
         /// Gets or sets the project's path for the build script.
         /// </summary>
         [Persistent]
-        public string BuildPath { get; set; }
+        public string BuildPath 
+        { 
+            get { return Util.CoalesceStr(this.buildPath, "build.xml"); }
+            set { this.buildPath = value; }
+        }
         /// <summary>
         /// Gets or sets the project's properties for the build script.
         /// </summary>
@@ -89,7 +95,7 @@ namespace Inedo.BuildMasterExtensions.Java
                         buffer.AppendFormat("\"-D{0}\" ", property);
                 }
 
-                buffer.AppendFormat("\"{0}\"", this.ProjectBuildTarget);
+                buffer.Append(this.ProjectBuildTarget);
 
                 this.ExecuteCommandLine(agent, cfg.AntPath, buffer.ToString(), this.RemoteConfiguration.SourceDirectory);
             }
