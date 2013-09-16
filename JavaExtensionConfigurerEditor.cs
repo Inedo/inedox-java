@@ -8,8 +8,8 @@ namespace Inedo.BuildMasterExtensions.Java
 {
     public class JavaExtensionConfigurerEditor : ExtensionConfigurerEditorBase
     {
-        ValidatingTextBox txtJdkPath;
-        TextBox txtAntPath;
+        private ValidatingTextBox txtJdkPath;
+        private TextBox txtAntPath;
 
         protected override void CreateChildControls()
         {
@@ -23,7 +23,7 @@ namespace Inedo.BuildMasterExtensions.Java
                 Width = Unit.Pixel(300)
             };
 
-            CUtil.Add(this,
+            this.Controls.Add(
                 new FormFieldGroup(
                     "JDK Path",
                     "The path to the Java Development Kit.",
@@ -43,13 +43,11 @@ namespace Inedo.BuildMasterExtensions.Java
                     )
                 )
             );
-
-            base.CreateChildControls();
         }
 
         public override void BindToForm(ExtensionConfigurerBase extension)
         {
-            EnsureChildControls();
+            this.EnsureChildControls();
 
             var configurer = (JavaExtensionConfigurer)extension;
             txtJdkPath.Text = configurer.JdkPath ?? string.Empty;
@@ -58,7 +56,7 @@ namespace Inedo.BuildMasterExtensions.Java
 
         public override ExtensionConfigurerBase CreateFromForm()
         {
-            EnsureChildControls();
+            this.EnsureChildControls();
 
             return new JavaExtensionConfigurer()
             {
@@ -69,7 +67,7 @@ namespace Inedo.BuildMasterExtensions.Java
 
         public override void InitializeDefaultValues()
         {
-            BindToForm(new JavaExtensionConfigurer());
+            this.BindToForm(new JavaExtensionConfigurer());
         }
     }
 }

@@ -1,7 +1,5 @@
-﻿using System;
-using Inedo.BuildMaster;
+﻿using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
-using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Web;
 
 namespace Inedo.BuildMasterExtensions.Java
@@ -13,8 +11,7 @@ namespace Inedo.BuildMasterExtensions.Java
         "Runs the Maven executable.",
         "Java")]
     [CustomEditor(typeof(MavenActionEditor))]
-    [RequiresInterface(typeof(IRemoteProcessExecuter))]
-    public sealed class MavenAction : CommandLineActionBase
+    public sealed class MavenAction : AgentBasedActionBase
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MavenAction"/> class.
@@ -60,38 +57,21 @@ namespace Inedo.BuildMasterExtensions.Java
         {
             this.LogInformation("Executing Maven...");
 
-            using (var agent = (IRemoteProcessExecuter)Util.Agents.CreateAgentFromId(this.ServerId))
-            {
-                int retCode = this.ExecuteCommandLine(
-                    agent,
-                    this.MavenPath,
-                    string.Format(
-                        " {0} {1}",
-                        string.Join(" ", this.AdditionalArguments ?? new string[0]),
-                        string.Join(" ", this.GoalsAndPhases ?? new string[0])
-                    ),
-                    this.RemoteConfiguration.SourceDirectory
-                );
+            int retCode = this.ExecuteCommandLine(
+                this.MavenPath,
+                string.Format(
+                    " {0} {1}",
+                    string.Join(" ", this.AdditionalArguments ?? new string[0]),
+                    string.Join(" ", this.GoalsAndPhases ?? new string[0])
+                ),
+                this.Context.SourceDirectory
+            );
 
-                if(retCode != 0)
-                    this.LogError("Maven returned error code {0} (expected 0)", retCode);
-            }
+            if (retCode != 0)
+                this.LogError("Maven returned error code {0} (expected 0)", retCode);
 
             this.LogInformation("Maven execution complete.");
         }
-        /// <summary>
-        /// When implemented in a derived class, processes an arbitrary command
-        /// on the appropriate server.
-        /// </summary>
-        /// <param name="name">Name of command to process.</param>
-        /// <param name="args">Optional command arguments.</param>
-        /// <returns>
-        /// Result of the command.
-        /// </returns>
-        protected override string ProcessRemoteCommand(string name, string[] args)
-        {
-            throw new NotImplementedException();
-        } 
         /// <summary>
         /// Invoked when data is written to the process's Standard Out output.
         /// </summary>

@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Xml;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
-using Inedo.Linq;
-using System.Xml;
 
 namespace Inedo.BuildMasterExtensions.Java
 {
@@ -15,9 +14,8 @@ namespace Inedo.BuildMasterExtensions.Java
         "Updates the package version value in a pom.xml file.",
         "Java")]
     [CustomEditor(typeof(UpdateVersionInPOMActionEditor))]
-    public class UpdateVersionInPOMAction : RemoteActionBase
+    public class UpdateVersionInPOMAction : AgentBasedActionBase
     {
-
         [Persistent]
         public string[] FileMasks { get; set; }
         [Persistent]
@@ -42,22 +40,21 @@ namespace Inedo.BuildMasterExtensions.Java
         }
         protected override void Execute()
         {
-
             this.LogInformation("Setting Assembly Version Attributes to {0}...", this.Version);
 
-            using (var fileOps = (IFileOperationsExecuter)Util.Agents.CreateAgentFromId(this.ServerId))
+            var fileOps = this.Context.Agent.GetService<IFileOperationsExecuter>();
             {
                 var entry = fileOps.GetDirectoryEntry(
                     new GetDirectoryEntryCommand
                     {
-                        Path = this.RemoteConfiguration.SourceDirectory,
+                        Path = this.Context.SourceDirectory,
                         IncludeRootPath = true,
                         Recurse = this.Recursive
                     }
                 ).Entry;
 
                 var matches = Util.Files.Comparison.GetMatches(
-                    this.RemoteConfiguration.SourceDirectory,
+                    this.Context.SourceDirectory,
                     entry,
                     this.FileMasks
                 ).OfType<FileEntryInfo>();
@@ -72,23 +69,15 @@ namespace Inedo.BuildMasterExtensions.Java
                 {
                     this.LogDebug("Writing package version to {0}...", match.Path);
 
-                    var text = Encoding.UTF8.GetString(fileOps.ReadAllFileBytes(match.Path));
+                    var text = Encoding.UTF8.GetString(fileOps.ReadFileBytes(match.Path));
                     text = TransformFile(text, this.Version);
-                    fileOps.WriteFile(
+                    fileOps.WriteFileBytes(
                         match.Path,
-                        null,
-                        null,
-                        Encoding.UTF8.GetBytes(text),
-                        false
+                        Encoding.UTF8.GetBytes(text)
                     );
                 }
 
             }
-        }
-
-        protected override string ProcessRemoteCommand(string name, string[] args)
-        {
-            throw new NotImplementedException();
         }
 
         internal string TransformFile(string Input, string Version)

@@ -50,7 +50,7 @@ namespace Inedo.BuildMasterExtensions.Java
         /// </returns>
         public override string ToString()
         {
-            return String.Empty;
+            return string.Empty;
         }
     }
 }

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Inedo.BuildMaster.Extensibility.Actions;
-using Inedo.BuildMaster;
+﻿using System.Collections.Generic;
 using System.IO;
-using Inedo.BuildMaster.Files;
-using Inedo.BuildMaster.Web;
 using System.Text.RegularExpressions;
+using Inedo.BuildMaster;
+using Inedo.BuildMaster.Extensibility.Actions;
+using Inedo.BuildMaster.Web;
 
 namespace Inedo.BuildMasterExtensions.Java
 {
@@ -21,7 +18,7 @@ namespace Inedo.BuildMasterExtensions.Java
         "Compiles a Java source tree.",
         "Java")]
     [CustomEditor(typeof(JavacActionEditor))]
-    public sealed class JavacAction : CommandLineActionBase
+    public sealed class JavacAction : RemoteActionBase
     {
         public JavacAction()
         {
@@ -100,15 +97,15 @@ namespace Inedo.BuildMasterExtensions.Java
 
             // Build file list
             var sourceFiles = Directory.GetFiles(
-                RemoteConfiguration.SourceDirectory,
+                Context.SourceDirectory,
                 "*.java",
                 SearchOption.AllDirectories);
 
            
             // Build args list
             var argList = new List<string>();
-            argList.Add("-s \"" + RemoteConfiguration.TargetDirectory.Replace("\\","\\\\") + "\"");
-            argList.Add("-d \"" + RemoteConfiguration.TargetDirectory.Replace("\\", "\\\\") + "\"");
+            argList.Add("-s \"" + Context.TargetDirectory.Replace("\\","\\\\") + "\"");
+            argList.Add("-d \"" + Context.TargetDirectory.Replace("\\", "\\\\") + "\"");
             argList.Add("-g:{" + Util.CoalesceStr(
                 Debug_lines ? "lines" : "",
                 Debug_vars ? "vars" : "",
@@ -130,8 +127,8 @@ namespace Inedo.BuildMasterExtensions.Java
             File.WriteAllLines(FILE_argList, argList.ToArray());
 
             // Create Output (Javac doesn't create it)
-            if (!Directory.Exists(RemoteConfiguration.TargetDirectory))
-                Directory.CreateDirectory(RemoteConfiguration.TargetDirectory);
+            if (!Directory.Exists(Context.TargetDirectory))
+                Directory.CreateDirectory(Context.TargetDirectory);
 
             string javacPath = Path.Combine(((JavaExtensionConfigurer)GetExtensionConfigurer()).JdkPath, "bin" + Path.DirectorySeparatorChar +  "javac.exe");
 
@@ -142,10 +139,10 @@ namespace Inedo.BuildMasterExtensions.Java
                     "@\"{0}\" @\"{1}\"",
                     FILE_argList,
                     FILE_sourceFiles),
-                RemoteConfiguration.SourceDirectory);
+                Context.SourceDirectory);
 
             // Done
-            return retCde;
+            return retCde.ToString();
         }
 
         bool isWarning = false;

@@ -2,7 +2,6 @@
 using System.Text;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
-using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Web;
 
 namespace Inedo.BuildMasterExtensions.Java
@@ -15,8 +14,7 @@ namespace Inedo.BuildMasterExtensions.Java
         "Builds an Ant project using a build file.",
         "Java")]
     [CustomEditor(typeof(AntActionEditor))]
-    [RequiresInterface(typeof(IRemoteProcessExecuter))]
-    public sealed class AntAction : CommandLineActionBase
+    public sealed class AntAction : AgentBasedActionBase
     {
         private string buildPath;
 
@@ -84,34 +82,18 @@ namespace Inedo.BuildMasterExtensions.Java
             if (string.IsNullOrEmpty(cfg.AntPath))
                 throw new InvalidOperationException("Ant path is not specified in the Java extension configuration.");
 
-            using (var agent = (IRemoteProcessExecuter)Util.Agents.CreateAgentFromId(this.ServerId))
+            var buffer = new StringBuilder();
+            buffer.AppendFormat("-buildfile \"{0}\" ", this.BuildPath);
+
+            if (this.BuildProperties != null && this.BuildProperties.Length > 0)
             {
-                var buffer = new StringBuilder();
-                buffer.AppendFormat("-buildfile \"{0}\" ", this.BuildPath);
-
-                if (this.BuildProperties != null && this.BuildProperties.Length > 0)
-                {
-                    foreach (var property in this.BuildProperties)
-                        buffer.AppendFormat("\"-D{0}\" ", property);
-                }
-
-                buffer.Append(this.ProjectBuildTarget);
-
-                this.ExecuteCommandLine(agent, cfg.AntPath, buffer.ToString(), this.RemoteConfiguration.SourceDirectory);
+                foreach (var property in this.BuildProperties)
+                    buffer.AppendFormat("\"-D{0}\" ", property);
             }
-        }
-        /// <summary>
-        /// When implemented in a derived class, processes an arbitrary command
-        /// on the appropriate server.
-        /// </summary>
-        /// <param name="name">Name of command to process.</param>
-        /// <param name="args">Optional command arguments.</param>
-        /// <returns>
-        /// Result of the command.
-        /// </returns>
-        protected override string ProcessRemoteCommand(string name, string[] args)
-        {
-            throw new NotImplementedException();
+
+            buffer.Append(this.ProjectBuildTarget);
+
+            this.ExecuteCommandLine(cfg.AntPath, buffer.ToString(), this.Context.SourceDirectory);
         }
     }
 }
