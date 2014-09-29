@@ -8,8 +8,9 @@ namespace Inedo.BuildMasterExtensions.Java
     /// Executes a Maven action.
     /// </summary>
     [ActionProperties("Execute Maven",
-        "Runs the Maven executable.",
-        "Java")]
+        "Runs the Maven executable.")]
+    [Tag(Tags.Java)]
+    [Tag(Tags.Builds)]
     [CustomEditor(typeof(MavenActionEditor))]
     public sealed class MavenAction : AgentBasedActionBase
     {

@@ -15,8 +15,8 @@ namespace Inedo.BuildMasterExtensions.Java
     /// http://java.sun.com/javase/6/docs/technotes/tools/windows/javac.html
     /// </remarks>
     [ActionProperties("Javac",
-        "Compiles a Java source tree.",
-        "Java")]
+        "Compiles a Java source tree.")]
+    [Tag(Tags.Java)]
     [CustomEditor(typeof(JavacActionEditor))]
     public sealed class JavacAction : RemoteActionBase
     {

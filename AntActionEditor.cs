@@ -113,7 +113,7 @@ namespace Inedo.BuildMasterExtensions.Java
             {
                 if (property.Length < 3 || !property.Substring(1, property.Length - 2).Contains("="))
                 {
-                    e.ValidLevel = ValidationLevels.Error;
+                    e.ValidLevel = ValidationLevel.Error;
                     e.Message = "Build properties must be in the form property=value, separated by newlines.";
                     return;
                 }

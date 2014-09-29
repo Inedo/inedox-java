@@ -11,8 +11,8 @@ using Inedo.BuildMaster.Web;
 namespace Inedo.BuildMasterExtensions.Java
 {
     [ActionProperties("Update Version in POM",
-        "Updates the package version value in a pom.xml file.",
-        "Java")]
+        "Updates the package version value in a pom.xml file.")]
+    [Tag(Tags.Java)]
     [CustomEditor(typeof(UpdateVersionInPOMActionEditor))]
     public class UpdateVersionInPOMAction : AgentBasedActionBase
     {

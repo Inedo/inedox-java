@@ -11,8 +11,9 @@ namespace Inedo.BuildMasterExtensions.Java
     /// </summary>
     [ActionProperties(
         "Build Ant Project",
-        "Builds an Ant project using a build file.",
-        "Java")]
+        "Builds an Ant project using a build file.")]
+    [Tag(Tags.Java)]
+    [Tag(Tags.Builds)]
     [CustomEditor(typeof(AntActionEditor))]
     public sealed class AntAction : AgentBasedActionBase
     {
