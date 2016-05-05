@@ -77,25 +77,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AntAction.cs" />
-    <Compile Include="AntActionEditor.cs">
+    <Compile Include="Legacy\AntAction.cs" />
+    <Compile Include="Legacy\AntActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="JavacActionEditor.cs">
+    <Compile Include="Legacy\JavacActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="JavacAction.cs" />
-    <Compile Include="JavaExtensionConfigurer.cs" />
-    <Compile Include="JavaExtensionConfigurerEditor.cs">
+    <Compile Include="Legacy\JavacAction.cs" />
+    <Compile Include="Legacy\JavaExtensionConfigurer.cs" />
+    <Compile Include="Legacy\JavaExtensionConfigurerEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="MavenAction.cs" />
-    <Compile Include="MavenActionEditor.cs">
+    <Compile Include="Legacy\MavenAction.cs" />
+    <Compile Include="Legacy\MavenActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UpdateVersionInPOMAction.cs" />
-    <Compile Include="UpdateVersionInPOMActionEditor.cs">
+    <Compile Include="Legacy\UpdateVersionInPOMAction.cs" />
+    <Compile Include="Legacy\UpdateVersionInPOMActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
   </ItemGroup>
