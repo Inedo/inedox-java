@@ -65,6 +65,14 @@ namespace Inedo.BuildMasterExtensions.Java.Operations
             );
         }
 
+        protected override void LogProcessOutput(string text)
+        {
+            if (text.Contains("[ERROR]"))
+                this.LogError(text);
+            else
+                this.LogInformation(text);
+        }
+
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)
         {
             return new ExtendedRichDescription(
