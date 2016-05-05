@@ -4,9 +4,11 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using Inedo.BuildMaster;
+using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Extensibility.Actions.Testing;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Web;
+using Inedo.Documentation;
 using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.JUnit
@@ -14,6 +16,8 @@ namespace Inedo.BuildMasterExtensions.JUnit
     [DisplayName("Execute jUnit Tests")]
     [Description("Executes jUnit 4.x and later tests.")]
     [CustomEditor(typeof(JUnitActionEditor))]
+    [Tag(Tags.Java), Tag(Tags.UnitTests)]
+    [ConvertibleToOperation(typeof(JUnitActionImporter))]
     public sealed class JUnitAction : UnitTestActionBase
     {
         private StringBuilder standardOut = new StringBuilder();
