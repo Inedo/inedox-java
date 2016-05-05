@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Configurers.Extension;
 using Inedo.BuildMaster.Web;
+using Inedo.Serialization;
 
 [assembly: ExtensionConfigurer(typeof(Inedo.BuildMasterExtensions.Java.JavaExtensionConfigurer))]
 
@@ -41,16 +41,5 @@ namespace Inedo.BuildMasterExtensions.Java
         /// </summary>
         [Persistent]
         public string AntPath { get; set; }
-
-        /// <summary>
-        /// Returns a <see cref="System.String"/> that represents this instance.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="System.String"/> that represents this instance.
-        /// </returns>
-        public override string ToString()
-        {
-            return string.Empty;
-        }
     }
 }

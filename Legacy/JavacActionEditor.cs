@@ -2,7 +2,6 @@
 using System.Text.RegularExpressions;
 using System.Web.UI.WebControls;
 using Inedo.BuildMaster.Extensibility.Actions;
-using Inedo.BuildMaster.Web.Controls;
 using Inedo.BuildMaster.Web.Controls.Extensions;
 using Inedo.Web.Controls;
 
@@ -13,8 +12,8 @@ namespace Inedo.BuildMasterExtensions.Java
         private ValidatingTextBox txtExtensionDirectories;
         private ValidatingTextBox txtAdditionalArguments;
 
-        public override bool DisplaySourceDirectory { get { return true; } }
-        public override bool DisplayTargetDirectory { get { return true; } }
+        public override bool DisplaySourceDirectory => true;
+        public override bool DisplayTargetDirectory => true;
 
         protected override void CreateChildControls()
         {
@@ -32,22 +31,19 @@ namespace Inedo.BuildMasterExtensions.Java
 
 
             this.Controls.Add(
-                new FormFieldGroup(
-                    "Extensions Paths",
-                    "The relative path of Java extensions required for compilation.",
-                    false,
-                    new StandardFormField("Extension Paths:", txtExtensionDirectories)),
-                new FormFieldGroup(
-                    "Additional Arguments",
-                    "Any additional arguments for javac, entered one per line.",
-                    true,
-                    new StandardFormField("Additional Arguments:", txtAdditionalArguments)));
+                new SlimFormField("Extension paths:", txtExtensionDirectories)
+                {
+                    HelpText = "The relative path of Java extensions required for compilation."
+                },
+                new SlimFormField("Additional Arguments:", txtAdditionalArguments)
+                {
+                    HelpText = "Any additional arguments for javac, entered one per line."
+                }
+            );
         }
 
         public override void BindToForm(ActionBase extension)
         {
-            this.EnsureChildControls();
-
             var javac = (JavacAction)extension;
             if (javac.AdditionalArguments != null)
                 txtAdditionalArguments.Text = string.Join(Environment.NewLine, javac.AdditionalArguments);
@@ -57,8 +53,6 @@ namespace Inedo.BuildMasterExtensions.Java
 
         public override ActionBase CreateFromForm()
         {
-            this.EnsureChildControls();
-
             var javac = new JavacAction();
             javac.AdditionalArguments = Regex.Split(txtAdditionalArguments.Text, "\r?\n");
             javac.ExtensionDirectories = Regex.Split(txtExtensionDirectories.Text, "\r?\n");

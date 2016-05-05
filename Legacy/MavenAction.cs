@@ -1,14 +1,14 @@
-﻿using Inedo.BuildMaster;
+﻿using System.ComponentModel;
+using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Web;
+using Inedo.Documentation;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.Java
 {
-    /// <summary>
-    /// Executes a Maven action.
-    /// </summary>
-    [ActionProperties("Execute Maven",
-        "Runs the Maven executable.")]
+    [DisplayName("Execute Maven")]
+    [Description("Runs the Maven executable.")]
     [Tag(Tags.Java)]
     [Tag(Tags.Builds)]
     [CustomEditor(typeof(MavenActionEditor))]

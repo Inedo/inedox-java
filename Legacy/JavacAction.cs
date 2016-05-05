@@ -1,21 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text.RegularExpressions;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Web;
+using Inedo.Documentation;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.Java
 {
-    /// <summary>
-    /// Represents an action that wraps javac
-    /// </summary>
-    /// <remarks>
-    /// This is based off of JSE1.6: 
-    /// http://java.sun.com/javase/6/docs/technotes/tools/windows/javac.html
-    /// </remarks>
-    [ActionProperties("Javac",
-        "Compiles a Java source tree.")]
+    // This is based off of JSE1.6: http://java.sun.com/javase/6/docs/technotes/tools/windows/javac.html
+    [DisplayName("Javac")]
+    [Description("Compiles a Java source tree.")]
     [Tag(Tags.Java)]
     [CustomEditor(typeof(JavacActionEditor))]
     public sealed class JavacAction : RemoteActionBase
@@ -106,7 +103,7 @@ namespace Inedo.BuildMasterExtensions.Java
             var argList = new List<string>();
             argList.Add("-s \"" + Context.TargetDirectory.Replace("\\","\\\\") + "\"");
             argList.Add("-d \"" + Context.TargetDirectory.Replace("\\", "\\\\") + "\"");
-            argList.Add("-g:{" + Util.CoalesceStr(
+            argList.Add("-g:{" + AH.CoalesceString(
                 Debug_lines ? "lines" : "",
                 Debug_vars ? "vars" : "",
                 Debug_source ? "source" : "")

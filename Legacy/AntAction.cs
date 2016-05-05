@@ -1,30 +1,22 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Text;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Actions;
 using Inedo.BuildMaster.Web;
+using Inedo.Documentation;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.Java
 {
-    /// <summary>
-    /// Builds an Ant build file.
-    /// </summary>
-    [ActionProperties(
-        "Build Ant Project",
-        "Builds an Ant project using a build file.")]
+    [DisplayName("Build Ant Project")]
+    [Description("Builds an Ant project using a build file.")]
     [Tag(Tags.Java)]
     [Tag(Tags.Builds)]
     [CustomEditor(typeof(AntActionEditor))]
     public sealed class AntAction : AgentBasedActionBase
     {
         private string buildPath;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AntAction"/> class.
-        /// </summary>
-        public AntAction()
-        {
-        }
 
         /// <summary>
         /// Gets or sets the project's target for the build script.
