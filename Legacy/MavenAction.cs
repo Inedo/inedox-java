@@ -12,15 +12,9 @@ namespace Inedo.BuildMasterExtensions.Java
     [Tag(Tags.Java)]
     [Tag(Tags.Builds)]
     [CustomEditor(typeof(MavenActionEditor))]
+    [ConvertibleToOperation(typeof(MavenActionImporter))]
     public sealed class MavenAction : AgentBasedActionBase
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MavenAction"/> class.
-        /// </summary>
-        public MavenAction()
-        {
-        }
-
         /// <summary>
         /// Gets or sets the path to Maven.
         /// </summary>

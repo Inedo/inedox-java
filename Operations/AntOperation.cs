@@ -71,6 +71,8 @@ namespace Inedo.BuildMasterExtensions.Java.Operations
 
             buffer.Append(this.ProjectBuildTarget);
 
+            fileOps.CreateDirectory(context.WorkingDirectory);
+
             await this.ExecuteCommandLineAsync(
                 context,
                 new AgentProcessStartInfo
