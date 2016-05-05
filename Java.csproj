@@ -83,6 +83,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Functions\AntPathVariableFunction.cs" />
+    <Compile Include="Legacy\ActionImporters\AntActionImporter.cs" />
     <Compile Include="Legacy\AntAction.cs" />
     <Compile Include="Legacy\AntActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
@@ -99,6 +101,8 @@
     <Compile Include="Legacy\MavenActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="Operations\AntOperation.cs" />
+    <Compile Include="Operations\MavenOperation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

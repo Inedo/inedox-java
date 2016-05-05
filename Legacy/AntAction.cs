@@ -14,6 +14,7 @@ namespace Inedo.BuildMasterExtensions.Java
     [Tag(Tags.Java)]
     [Tag(Tags.Builds)]
     [CustomEditor(typeof(AntActionEditor))]
+    [ConvertibleToOperation(typeof(AntActionImporter))]
     public sealed class AntAction : AgentBasedActionBase
     {
         private string buildPath;
