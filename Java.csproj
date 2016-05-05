@@ -99,6 +99,10 @@
     <Compile Include="Legacy\JavaExtensionConfigurerEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="Legacy\JUnitAction.cs" />
+    <Compile Include="Legacy\JUnitActionEditor.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="Legacy\MavenAction.cs" />
     <Compile Include="Legacy\MavenActionEditor.cs">
       <SubType>ASPXCodeBehind</SubType>
@@ -126,6 +130,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="BuildMaster.jar">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
