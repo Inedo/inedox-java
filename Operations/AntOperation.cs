@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Inedo.Agents;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility;
-using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Operations;
 using Inedo.Diagnostics;
 using Inedo.Documentation;
@@ -75,7 +75,7 @@ namespace Inedo.BuildMasterExtensions.Java.Operations
 
             await this.ExecuteCommandLineAsync(
                 context,
-                new AgentProcessStartInfo
+                new RemoteProcessStartInfo
                 {
                     FileName = this.AntPath,
                     Arguments = buffer.ToString(),

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using Inedo.Agents;
 using Inedo.BuildMaster.Extensibility;
-using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Operations;
 using Inedo.BuildMaster.Extensibility.VariableFunctions;
 
@@ -17,8 +17,8 @@ namespace Inedo.BuildMasterExtensions.Java.Functions
             if (operationContext == null)
                 throw new InvalidOperationException("Operation execution context is not available.");
 
-            var env = operationContext.Agent.GetService<IEnvironmentVariableAccessor>();
-            var antPath = env.GetVariableValue("M2_HOME");
+            var env = operationContext.Agent.GetService<IRemoteProcessExecuter>();
+            var antPath = env.GetEnvironmentVariableValue("M2_HOME");
             if (string.IsNullOrEmpty(antPath))
                 return string.Empty;
 

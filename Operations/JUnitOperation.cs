@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Inedo.Agents;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Data;
 using Inedo.BuildMaster.Extensibility;
-using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Operations;
 using Inedo.Diagnostics;
 using Inedo.Documentation;
@@ -74,11 +74,11 @@ namespace Inedo.BuildMasterExtensions.Java.Operations
             var testClassesFileName = fileOps.CombinePath(sourceDirectory, Guid.NewGuid().ToString("N"));
             try
             {
-                fileOps.WriteAllText(testClassesFileName, string.Join(fileOps.GetNewLine(), testClasses));
+                fileOps.WriteAllText(testClassesFileName, string.Join(fileOps.NewLine, testClasses));
 
                 await this.ExecuteCommandLineAsync(
                     context,
-                    new AgentProcessStartInfo
+                    new RemoteProcessStartInfo
                     {
                         FileName = this.JavaPath,
                         Arguments = $"-cp .;{bmjPath} -Djava.exe.dirs=\"{string.Join(";", this.ExtensionDirectories ?? Enumerable.Empty<string>())}\" inedo.buildmasterextensions.java.jUnitAction \"@{testClassesFileName}\"",
