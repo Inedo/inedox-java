@@ -1,13 +1,7 @@
-packages/*
-
+Java/packages/*
 bin
-
 obj
-
 *.suo
-
 *.user
-
 *.vspscc
-
 */_sgbak/*
