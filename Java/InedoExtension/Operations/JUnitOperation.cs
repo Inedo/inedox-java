@@ -73,6 +73,8 @@ namespace Inedo.Extensions.Java.Operations
             {
                 fileOps.WriteAllText(testClassesFileName, string.Join(fileOps.NewLine, testClasses));
 
+                var testTime = DateTime.UtcNow;
+
                 await this.ExecuteCommandLineAsync(
                     context,
                     new RemoteProcessStartInfo
@@ -95,7 +97,7 @@ namespace Inedo.Extensions.Java.Operations
                     return;
                 }
 
-                var testTime = DateTime.UtcNow;
+                var testRecorder = await context.TryGetServiceAsync<IUnitTestRecorder>();
 
                 foreach (var tr in testResults.Descendants("TestResult"))
                 {
@@ -138,30 +140,17 @@ namespace Inedo.Extensions.Java.Operations
                             testResult.AppendLine(cdata.Value);
                     }
 
-                    // TODO: replace this section when Inedo.SDK supports unit tests.
-                    /*
-                    DB.BuildTestResults_RecordTestResult(
-                        Execution_Id: context.ExecutionId,
-                        Group_Name: null,
-                        Test_Name: testName,
-                        TestStatus_Code: failCount == 0 ? Domains.TestStatusCodes.Passed : Domains.TestStatusCodes.Failed,
-                        TestResult_Text: testResult.ToString(),
-                        TestStarted_Date: testTime,
-                        TestEnded_Date: testTime.AddMilliseconds(runTime)
-                    );
-                    */
-                    this.LogInformation($"Name: {testName}");
-                    this.LogInformation($"Duration: {runTime}");
-                    if (failCount == 0)
+                    if (testRecorder != null)
                     {
-                        this.LogInformation("Passed");
+                        await testRecorder.RecordUnitTestAsync(
+                            groupName: null,
+                            testName: testName,
+                            testStatus: failCount == 0 ? UnitTestStatus.Passed : UnitTestStatus.Failed,
+                            testResult: testResult.ToString(),
+                            startTime: testTime,
+                            duration: TimeSpan.FromMilliseconds(runTime)
+                        ).ConfigureAwait(false);
                     }
-                    else
-                    {
-                        this.LogError("Failed");
-                    }
-                    this.LogDebug(testResult.ToString());
-                    // end TODO
 
                     testTime = testTime.AddMilliseconds(runTime);
                 }
