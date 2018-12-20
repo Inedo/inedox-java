@@ -1,6 +1,6 @@
 # inedox-java
 
-[![Build status](https://ci.appveyor.com/api/projects/status/lfp8xwbk7b7yfm8u/branch/master?svg=true)](https://ci.appveyor.com/project/Inedo/inedox-java/branch/master)
+[![Build status](https://buildmaster.inedo.com/api/ci-badges/image?API_Key=badges&$ApplicationId=7)](https://buildmaster.inedo.com/api/ci-badges/link?API_Key=badges&$ApplicationId=7)
 
 Contains operations for Java compilation and testing.
 
