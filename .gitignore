@@ -5,4 +5,5 @@ obj
 *.user
 *.vspscc
 */_sgbak/*
-/Java/.vs/Java/v15/Server/sqlite3
+/Java/.vs
+/.vs
