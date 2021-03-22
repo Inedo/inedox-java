@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Inedo.Extensibility;
 
 [assembly: AssemblyTitle("Java")]
 [assembly: AssemblyDescription("Contains actions for Java compilation and testing.")]
@@ -11,3 +12,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.11.0")]
 [assembly: CLSCompliant(false)]
 [assembly: ComVisible(false)]
+[assembly: AppliesTo(InedoProduct.BuildMaster | InedoProduct.Otter)]
