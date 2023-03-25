@@ -1,24 +1,28 @@
 ﻿using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Inedo.Agents;
 using Inedo.Diagnostics;
 using Inedo.Documentation;
 using Inedo.Extensibility;
 using Inedo.Extensibility.Operations;
+using Inedo.Extensions.PackageSources;
+using Inedo.IO;
+using Inedo.Web;
 
 namespace Inedo.Extensions.Java.Operations
 {
-    [DisplayName("Execute Maven")]
+    [DisplayName("Maven")]
     [Description("Runs the Maven executable.")]
+    [ScriptAlias("Maven")]
     [ScriptAlias("Execute-Maven")]
-    [ScriptNamespace("Java", PreferUnqualified = true)]
-    [Tag("java")]
-    [Tag("builds")]
+    [ScriptNamespace("Java", PreferUnqualified = false)]
     public sealed class MavenOperation : ExecuteOperation
     {
         [ScriptAlias("GoalsAndPhases")]
         [DisplayName("Goals/phases")]
         [Description("Space-separated list of Maven goals and/or phases.")]
+        [SuggestableValue("validate", "versions:set", "compile", "test", "package", "verify", "install", "deploy")]
         public string GoalsAndPhases { get; set; }
         [ScriptAlias("In")]
         [DisplayName("Source directory")]
@@ -33,6 +37,23 @@ namespace Inedo.Extensions.Java.Operations
         [DisplayName("Maven path")]
         [Description("Full path to mvn on the server.")]
         public string MavenPath { get; set; }
+        [ScriptAlias("DependenciesFeed")]
+        [DisplayName("Dependencies Feed")]
+        [Description("If specified, this Maven repository will be used to install dependencies from.")]
+        [PlaceholderText("Use Maven Central")]
+        [SuggestableValue(typeof(MavenPackageSourceSuggestionProvider))]
+        public string DependenciesFeed { get; set; }
+        [ScriptAlias("PluginsFeed")]
+        [DisplayName("Plugins Feed")]
+        [Description("If specified, this Maven repository will be used to install plugins from.")]
+        [PlaceholderText("Use Maven Central")]
+        [SuggestableValue(typeof(MavenPackageSourceSuggestionProvider))]
+        public string PluginsFeed { get; set; }
+        [ScriptAlias("SettingsXml")]
+        [DisplayName("Settings XML")]
+        [Description("This cannot be used when using the Plugins Feed or Dependencies Feed parameter.")]
+        public string SettingsFile { get; set; }
+
 
         public override async Task ExecuteAsync(IOperationExecutionContext context)
         {
@@ -42,7 +63,145 @@ namespace Inedo.Extensions.Java.Operations
                 return;
             }
 
+            if((!string.IsNullOrWhiteSpace(this.DependenciesFeed) || !string.IsNullOrWhiteSpace(this.PluginsFeed)) && !string.IsNullOrWhiteSpace(this.SettingsFile))
+            {
+                this.LogError("Settings XML cannot be used with Plugins and Dependencies Feed");
+                return;
+            }
+
             var fileOps = context.Agent.GetService<IFileOperationsExecuter>();
+            var settingsXmlPath = AH.NullIf(this.SettingsFile, string.Empty);
+
+
+            if (!string.IsNullOrWhiteSpace(this.DependenciesFeed) || !string.IsNullOrWhiteSpace(this.PluginsFeed))
+            {
+                var serversNode = new XElement("servers");
+                var progetProfile = new XElement("profile",
+                    new XElement("id", "ProGet")
+                );
+
+                
+
+
+                if(!string.IsNullOrWhiteSpace(this.DependenciesFeed))
+                {
+                    var sourceId = new PackageSourceId(this.DependenciesFeed);
+                    var source = await AhPackages.GetPackageSourceAsync(sourceId, context, context.CancellationToken); 
+                    if (source == null)
+                    {
+                        this.LogError($"Dependencies feed \"{this.DependenciesFeed}\" not found.");
+                        return;
+                    }
+
+                    if (source is not IMavenPackageSource maven)
+                    {
+                        this.LogError($"Dependencies feed \"{this.DependenciesFeed}\" is a {source.GetType().Name} source; it must be a Maven source for use with this operation.");
+                        return;
+                    }
+
+                    progetProfile.Add(
+                        new XElement("repositories",
+                            new XElement("repository",
+                                new XElement("id", maven.SourceId.GetFeedName()),
+                                new XElement("url", maven.RepositoryUrl),
+                                new XElement("snapshots", new XElement("enabled", true)),
+                                new XElement("releases", new XElement("enabled", true))
+                            )
+                        )
+                    );
+
+                    if(!string.IsNullOrWhiteSpace(maven.ApiKey))
+                    {
+                        serversNode.Add(
+                            new XElement("server",
+                                new XElement("id", maven.SourceId.GetFeedName()),
+                                new XElement("username", "api"),
+                                new XElement("password", maven.ApiKey)
+                            )
+                        );
+                    }
+                    else if(!string.IsNullOrWhiteSpace(maven.Password))
+                    {
+                        serversNode.Add(
+                            new XElement("server",
+                                new XElement("id", maven.SourceId.GetFeedName()),
+                                new XElement("username", maven.UserName),
+                                new XElement("password", maven.Password)
+                            )
+                        );
+                    }
+                }
+
+                if(!string.IsNullOrWhiteSpace(this.PluginsFeed))
+                {
+                    var sourceId = new PackageSourceId(this.PluginsFeed);
+                    var source = await AhPackages.GetPackageSourceAsync(sourceId, context, context.CancellationToken); 
+                    if (source == null)
+                    {
+                        this.LogError($"Plugins feed \"{this.PluginsFeed}\" not found.");
+                        return;
+                    }
+
+                    if (source is not IMavenPackageSource maven)
+                    {
+                        this.LogError($"Plugins feed \"{this.PluginsFeed}\" is a {source.GetType().Name} source; it must be a Maven source for use with this operation.");
+                        return;
+                    }
+
+                    progetProfile.Add(
+                        new XElement("pluginRepositories",
+                            new XElement("pluginRepository",
+                                new XElement("id", maven.SourceId.GetFeedName()),
+                                new XElement("url", maven.RepositoryUrl),
+                                new XElement("snapshots", new XElement("enabled", true)),
+                                new XElement("releases", new XElement("enabled", true))
+                            )
+                        )
+                    );
+
+                    if(!string.IsNullOrWhiteSpace(maven.ApiKey))
+                    {
+                        serversNode.Add(
+                            new XElement("server",
+                                new XElement("id", maven.SourceId.GetFeedName()),
+                                new XElement("username", "api"),
+                                new XElement("password", maven.ApiKey)
+                            )
+                        );
+                    }
+                    else if(!string.IsNullOrWhiteSpace(maven.Password))
+                    {
+                        serversNode.Add(
+                            new XElement("server",
+                                new XElement("id", maven.SourceId.GetFeedName()),
+                                new XElement("username", maven.UserName),
+                                new XElement("password", maven.Password)
+                            )
+                        );
+                    }
+                }
+
+                XNamespace jarva = "http://maven.apache.org/SETTINGS/1.0.0";
+                XNamespace xsi = "http://www.w3.org/2001/XMLSchema-instance";
+                var settingsXml = new XDocument(
+                    new XDeclaration("1.0", "UTF-8", null),
+                    new XElement(jarva + "settings",
+                        new XAttribute(XNamespace.Xmlns + "xsi", xsi),
+                        new XAttribute(xsi + "schemaLocation", "http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd"),
+                        serversNode,
+                        new XElement("profiles",
+                            progetProfile
+                        ),
+                        new XElement("activeProfiles",
+                            new XElement("activeProfile", "ProGet")
+                        )
+                    )
+                );
+
+                settingsXmlPath = PathEx.Combine(context.ResolvePath(@"~\"), "settings.xml");
+                await fileOps.WriteAllTextAsync(settingsXmlPath, settingsXml.ToString(), InedoLib.UTF8Encoding);
+            }
+
             if (!fileOps.FileExists(this.MavenPath))
             {
                 this.LogError("Maven not found at: " + this.MavenPath);
@@ -53,12 +212,15 @@ namespace Inedo.Extensions.Java.Operations
             this.LogDebug("Source directory: " + sourceDirectory);
             fileOps.CreateDirectory(sourceDirectory);
 
+            if (settingsXmlPath != null)
+                settingsXmlPath = "-s " + settingsXmlPath;
+
             await this.ExecuteCommandLineAsync(
                 context,
                 new RemoteProcessStartInfo
                 {
                     FileName = this.MavenPath,
-                    Arguments = this.GoalsAndPhases + " " + this.AdditionalArguments,
+                    Arguments = this.GoalsAndPhases + " " + this.AdditionalArguments + " " + settingsXmlPath,
                     WorkingDirectory = sourceDirectory
                 }
             );
