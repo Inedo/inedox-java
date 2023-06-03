@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>-->
   <ItemGroup>
-    <PackageReference Include="Inedo.SDK" Version="2.2.2">
+    <PackageReference Include="Inedo.SDK" Version="2.2.3-ci.17">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
