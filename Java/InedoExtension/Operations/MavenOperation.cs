@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Inedo.Agents;
@@ -61,7 +62,31 @@ namespace Inedo.Extensions.Java.Operations
 
         private bool UseContainer => !string.IsNullOrEmpty(this.ImageBasedService);
 
-        public override async Task ExecuteAsync(IOperationExecutionContext context)
+        public override Task ExecuteAsync(IOperationExecutionContext context)
+        {
+            if (this.UseContainer && !hasDockerHost())
+            {
+                this.LogError($"Containerized builds are not supported in this version of {SDK.ProductName}.");
+                return Task.CompletedTask;
+            }
+
+            return this.ExecuteInternalAsync(context);
+
+            static bool hasDockerHost()
+            {
+                try
+                {
+                    return Type.GetType("Inedo.Extensibility.Operations.IDockerHost,Inedo.SDK", false) != null;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private async Task ExecuteInternalAsync(IOperationExecutionContext context)
         {
             Func<string, string> resolvePath = context.ResolvePath;
             IDockerHost docker = null;
