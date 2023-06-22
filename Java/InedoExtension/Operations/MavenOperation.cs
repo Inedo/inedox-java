@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Inedo.Agents;
@@ -62,38 +63,14 @@ namespace Inedo.Extensions.Java.Operations
 
         private bool UseContainer => !string.IsNullOrEmpty(this.ImageBasedService);
 
-        public override Task ExecuteAsync(IOperationExecutionContext context)
-        {
-            if (this.UseContainer && !hasDockerHost())
-            {
-                this.LogError($"Containerized builds are not supported in this version of {SDK.ProductName}.");
-                return Task.CompletedTask;
-            }
-
-            return this.ExecuteInternalAsync(context);
-
-            static bool hasDockerHost()
-            {
-                try
-                {
-                    return Type.GetType("Inedo.Extensibility.Operations.IDockerHost,Inedo.SDK", false) != null;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private async Task ExecuteInternalAsync(IOperationExecutionContext context)
+        public override async Task ExecuteAsync(IOperationExecutionContext context)
         {
             Func<string, string> resolvePath = context.ResolvePath;
-            IDockerHost docker = null;
+            DockerHostShim docker = null;
             if (this.UseContainer)
             {
                 this.LogDebug($"Performing containerized build using \"{this.ImageBasedService}\" image based service.");
-                docker = (await context.TryGetServiceAsync<IDockerHost>()) ?? throw new ExecutionFailureException($"Server {context.ServerName} does not have a Docker engine.");
+                docker = await DockerHostShim.CreateAsync(context);
                 resolvePath = docker.ResolveContainerPath;
             }
 
@@ -266,7 +243,7 @@ namespace Inedo.Extensions.Java.Operations
             else
             {
                 await docker.ExecuteInContainerAsync(
-                    new ContainerStartInfo(
+                    new ContainerStartInfoShim(
                         this.ImageBasedService,
                         new RemoteProcessStartInfo
                         {
@@ -303,5 +280,47 @@ namespace Inedo.Extensions.Java.Operations
                 )
             );
         }
+
+        private sealed class DockerHostShim
+        {
+            private readonly object host;
+
+            private DockerHostShim(object host) => this.host = host;
+
+            public static async Task<DockerHostShim> CreateAsync(IOperationExecutionContext context)
+            {
+                try
+                {
+                    return (await CreateInternalAsync(context)) ?? throw new ExecutionFailureException($"Server {context.ServerName} does not have a Docker engine.");
+                }
+                catch
+                {
+                    throw new ExecutionFailureException($"Containerized builds are not supported in this version of {SDK.ProductName}.");
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public string ResolveContainerPath(string relativePath) => ((IDockerHost)this.host).ResolveContainerPath(relativePath);
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public Task<int> ExecuteInContainerAsync(ContainerStartInfoShim containerStartInfo, CancellationToken cancellationToken = default)
+            {
+                return ((IDockerHost)this.host).ExecuteInContainerAsync(
+                    new ContainerStartInfo(containerStartInfo.Image, containerStartInfo.StartInfo, containerStartInfo.MapExecutionDirectory, OutputDataReceived: containerStartInfo.OutputDataReceived, ErrorDataReceived: containerStartInfo.ErrorDataReceived),
+                    cancellationToken
+                );
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            private static async Task<DockerHostShim> CreateInternalAsync(IOperationExecutionContext context)
+            {
+                var docker = await context.TryGetServiceAsync<IDockerHost>();
+                if (docker != null)
+                    return new DockerHostShim(docker);
+                else
+                    return null;
+            }
+        }
+
+        private sealed record ContainerStartInfoShim(string Image, RemoteProcessStartInfo StartInfo, bool MapExecutionDirectory = true, Action<string> OutputDataReceived = null, Action<string> ErrorDataReceived = null);
     }
 }
