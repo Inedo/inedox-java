@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Inedo.Extensions.Java</RootNamespace>
     <AssemblyName>Java</AssemblyName>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
@@ -12,11 +12,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <!--<ItemGroup 
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-  </ItemGroup>-->
   <ItemGroup>
-    <PackageReference Include="Inedo.SDK" Version="2.2.2">
+    <PackageReference Include="Inedo.SDK" Version="3.1.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

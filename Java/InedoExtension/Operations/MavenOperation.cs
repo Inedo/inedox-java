@@ -1,9 +1,13 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Inedo.Agents;
 using Inedo.Diagnostics;
 using Inedo.Documentation;
+using Inedo.ExecutionEngine.Executer;
 using Inedo.Extensibility;
 using Inedo.Extensibility.Operations;
 using Inedo.Extensions.PackageSources;
@@ -54,16 +58,29 @@ namespace Inedo.Extensions.Java.Operations
         [Description("This cannot be used when using the Plugins Feed or Dependencies Feed parameter.")]
         public string SettingsFile { get; set; }
 
+        [ScriptAlias("ImageBasedService")]
+        public string ImageBasedService { get; set; }
+
+        private bool UseContainer => !string.IsNullOrEmpty(this.ImageBasedService);
 
         public override async Task ExecuteAsync(IOperationExecutionContext context)
         {
-            if (string.IsNullOrEmpty(this.MavenPath))
+            Func<string, string> resolvePath = context.ResolvePath;
+            DockerHostShim docker = null;
+            if (this.UseContainer)
+            {
+                this.LogDebug($"Performing containerized build using \"{this.ImageBasedService}\" image based service.");
+                docker = await DockerHostShim.CreateAsync(context);
+                resolvePath = docker.ResolveContainerPath;
+            }
+
+            if (!this.UseContainer && string.IsNullOrEmpty(this.MavenPath))
             {
                 this.LogError("Could not determine the location of mvn on this server. To resolve this issue, ensure that Maven is available on this server and create a server-scoped variable named $MavenPath set to the location of mvn (or mvn.bat on Windows).");
                 return;
             }
 
-            if((!string.IsNullOrWhiteSpace(this.DependenciesFeed) || !string.IsNullOrWhiteSpace(this.PluginsFeed)) && !string.IsNullOrWhiteSpace(this.SettingsFile))
+            if ((!string.IsNullOrWhiteSpace(this.DependenciesFeed) || !string.IsNullOrWhiteSpace(this.PluginsFeed)) && !string.IsNullOrWhiteSpace(this.SettingsFile))
             {
                 this.LogError("Settings XML cannot be used with Plugins and Dependencies Feed");
                 return;
@@ -72,7 +89,6 @@ namespace Inedo.Extensions.Java.Operations
             var fileOps = context.Agent.GetService<IFileOperationsExecuter>();
             var settingsXmlPath = AH.NullIf(this.SettingsFile, string.Empty);
 
-
             if (!string.IsNullOrWhiteSpace(this.DependenciesFeed) || !string.IsNullOrWhiteSpace(this.PluginsFeed))
             {
                 var serversNode = new XElement("servers");
@@ -80,13 +96,10 @@ namespace Inedo.Extensions.Java.Operations
                     new XElement("id", "ProGet")
                 );
 
-                
-
-
-                if(!string.IsNullOrWhiteSpace(this.DependenciesFeed))
+                if (!string.IsNullOrWhiteSpace(this.DependenciesFeed))
                 {
                     var sourceId = new PackageSourceId(this.DependenciesFeed);
-                    var source = await AhPackages.GetPackageSourceAsync(sourceId, context, context.CancellationToken); 
+                    var source = await AhPackages.GetPackageSourceAsync(sourceId, context, context.CancellationToken);
                     if (source == null)
                     {
                         this.LogError($"Dependencies feed \"{this.DependenciesFeed}\" not found.");
@@ -110,7 +123,7 @@ namespace Inedo.Extensions.Java.Operations
                         )
                     );
 
-                    if(!string.IsNullOrWhiteSpace(maven.ApiKey))
+                    if (!string.IsNullOrWhiteSpace(maven.ApiKey))
                     {
                         serversNode.Add(
                             new XElement("server",
@@ -120,7 +133,7 @@ namespace Inedo.Extensions.Java.Operations
                             )
                         );
                     }
-                    else if(!string.IsNullOrWhiteSpace(maven.Password))
+                    else if (!string.IsNullOrWhiteSpace(maven.Password))
                     {
                         serversNode.Add(
                             new XElement("server",
@@ -132,10 +145,10 @@ namespace Inedo.Extensions.Java.Operations
                     }
                 }
 
-                if(!string.IsNullOrWhiteSpace(this.PluginsFeed))
+                if (!string.IsNullOrWhiteSpace(this.PluginsFeed))
                 {
                     var sourceId = new PackageSourceId(this.PluginsFeed);
-                    var source = await AhPackages.GetPackageSourceAsync(sourceId, context, context.CancellationToken); 
+                    var source = await AhPackages.GetPackageSourceAsync(sourceId, context, context.CancellationToken);
                     if (source == null)
                     {
                         this.LogError($"Plugins feed \"{this.PluginsFeed}\" not found.");
@@ -159,7 +172,7 @@ namespace Inedo.Extensions.Java.Operations
                         )
                     );
 
-                    if(!string.IsNullOrWhiteSpace(maven.ApiKey))
+                    if (!string.IsNullOrWhiteSpace(maven.ApiKey))
                     {
                         serversNode.Add(
                             new XElement("server",
@@ -169,7 +182,7 @@ namespace Inedo.Extensions.Java.Operations
                             )
                         );
                     }
-                    else if(!string.IsNullOrWhiteSpace(maven.Password))
+                    else if (!string.IsNullOrWhiteSpace(maven.Password))
                     {
                         serversNode.Add(
                             new XElement("server",
@@ -198,7 +211,7 @@ namespace Inedo.Extensions.Java.Operations
                     )
                 );
 
-                settingsXmlPath = PathEx.Combine(context.ResolvePath(@"~\"), "settings.xml");
+                settingsXmlPath = PathEx.Combine(resolvePath(@"~\"), "settings.xml");
                 await fileOps.WriteAllTextAsync(settingsXmlPath, settingsXml.ToString(), InedoLib.UTF8Encoding);
             }
 
@@ -208,22 +221,42 @@ namespace Inedo.Extensions.Java.Operations
                 return;
             }
 
-            var sourceDirectory = context.ResolvePath(this.SourceDirectory);
+            var sourceDirectory = resolvePath(this.SourceDirectory);
             this.LogDebug("Source directory: " + sourceDirectory);
             fileOps.CreateDirectory(sourceDirectory);
 
             if (settingsXmlPath != null)
                 settingsXmlPath = "-s " + settingsXmlPath;
 
-            await this.ExecuteCommandLineAsync(
-                context,
-                new RemoteProcessStartInfo
-                {
-                    FileName = this.MavenPath,
-                    Arguments = this.GoalsAndPhases + " " + this.AdditionalArguments + " " + settingsXmlPath,
-                    WorkingDirectory = sourceDirectory
-                }
-            );
+            if (!this.UseContainer)
+            {
+                await this.ExecuteCommandLineAsync(
+                    context,
+                    new RemoteProcessStartInfo
+                    {
+                        FileName = this.MavenPath,
+                        Arguments = this.GoalsAndPhases + " " + this.AdditionalArguments + " " + settingsXmlPath,
+                        WorkingDirectory = sourceDirectory
+                    }
+                );
+            }
+            else
+            {
+                await docker.ExecuteInContainerAsync(
+                    new ContainerStartInfoShim(
+                        this.ImageBasedService,
+                        new RemoteProcessStartInfo
+                        {
+                            FileName = "maven",
+                            Arguments = this.GoalsAndPhases + " " + this.AdditionalArguments + " " + settingsXmlPath,
+                            WorkingDirectory = sourceDirectory
+                        },
+                        OutputDataReceived: this.LogProcessOutput,
+                        ErrorDataReceived: this.LogProcessError
+                    ),
+                    context.CancellationToken
+                );
+            }
         }
 
         protected override void LogProcessOutput(string text)
@@ -247,5 +280,47 @@ namespace Inedo.Extensions.Java.Operations
                 )
             );
         }
+
+        private sealed class DockerHostShim
+        {
+            private readonly object host;
+
+            private DockerHostShim(object host) => this.host = host;
+
+            public static async Task<DockerHostShim> CreateAsync(IOperationExecutionContext context)
+            {
+                try
+                {
+                    return (await CreateInternalAsync(context)) ?? throw new ExecutionFailureException($"Server {context.ServerName} does not have a Docker engine.");
+                }
+                catch
+                {
+                    throw new ExecutionFailureException($"Containerized builds are not supported in this version of {SDK.ProductName}.");
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public string ResolveContainerPath(string relativePath) => ((IDockerHost)this.host).ResolveContainerPath(relativePath);
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            public Task<int> ExecuteInContainerAsync(ContainerStartInfoShim containerStartInfo, CancellationToken cancellationToken = default)
+            {
+                return ((IDockerHost)this.host).ExecuteInContainerAsync(
+                    new ContainerStartInfo(containerStartInfo.Image, containerStartInfo.StartInfo, containerStartInfo.MapExecutionDirectory, OutputDataReceived: containerStartInfo.OutputDataReceived, ErrorDataReceived: containerStartInfo.ErrorDataReceived),
+                    cancellationToken
+                );
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            private static async Task<DockerHostShim> CreateInternalAsync(IOperationExecutionContext context)
+            {
+                var docker = await context.TryGetServiceAsync<IDockerHost>();
+                if (docker != null)
+                    return new DockerHostShim(docker);
+                else
+                    return null;
+            }
+        }
+
+        private sealed record ContainerStartInfoShim(string Image, RemoteProcessStartInfo StartInfo, bool MapExecutionDirectory = true, Action<string> OutputDataReceived = null, Action<string> ErrorDataReceived = null);
     }
 }
