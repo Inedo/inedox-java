@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Inedo.Extensions.Java</RootNamespace>
     <AssemblyName>Java</AssemblyName>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
@@ -13,7 +13,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Inedo.SDK" Version="3.1.0">
+    <PackageReference Include="Inedo.SDK" Version="4.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
